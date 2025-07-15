@@ -1,0 +1,110 @@
+{
+  "name": "Bot IA Digital Auto - Final Version",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1",
+      "name": "D\u00e9clenchement Manuel",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "none",
+        "requestMethod": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "jsonParameters": true,
+        "options": {},
+        "bodyContentType": "json",
+        "headers": {
+          "header": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer sk-or-v1-db0...e2f"
+            }
+          ]
+        },
+        "bodyParametersJson": "{\n  \"model\": \"mistralai/mistral-7b-instruct\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Cr\u00e9e un produit digital \u00e0 vendre sur Gumroad sous ce format JSON : { \\\"title\\\": \\\"...\\\", \\\"description\\\": \\\"...\\\", \\\"price\\\": 9.99 }\"\n    }\n  ]\n}"
+      },
+      "id": "2",
+      "name": "G\u00e9n\u00e9rer Produit (OpenRouter)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const raw = JSON.parse(items[0].json.choices[0].message.content);\nreturn [{ json: raw }];"
+      },
+      "id": "3",
+      "name": "Extraire donn\u00e9es IA",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        750,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "none",
+        "requestMethod": "POST",
+        "url": "https://api.gumroad.com/v2/products",
+        "jsonParameters": true,
+        "options": {},
+        "bodyContentType": "json",
+        "headers": {
+          "header": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "bodyParametersJson": "{\n  \"access_token\": \"qm_erRuHRLUmTF22mPOPYMv9V-wNJa9VGvqEUTLA\",\n  \"name\": \"{{$json['title']}}\",\n  \"description\": \"{{$json['description']}}\",\n  \"price\": {{ Math.round($json['price'] * 100) }},\n  \"custom_permalink\": \"prod-{{ Date.now() }}\",\n  \"published\": true\n}"
+      },
+      "id": "4",
+      "name": "Publier sur Gumroad",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "D\u00e9clenchement Manuel": {
+      "main": [
+        [
+          "G\u00e9n\u00e9rer Produit (OpenRouter)"
+        ]
+      ]
+    },
+    "G\u00e9n\u00e9rer Produit (OpenRouter)": {
+      "main": [
+        [
+          "Extraire donn\u00e9es IA"
+        ]
+      ]
+    },
+    "Extraire donn\u00e9es IA": {
+      "main": [
+        [
+          "Publier sur Gumroad"
+        ]
+      ]
+    }
+  }
+}
